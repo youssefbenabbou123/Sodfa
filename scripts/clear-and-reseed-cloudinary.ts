@@ -82,7 +82,7 @@ const seedProducts = [
     category: 'Watches',
     price: 299,
     image: '/serpent.jpg',
-    images: ['/serpent.jpg', '/MontreSerpent.avif', '/leather-watch.png'],
+        images: ['/serpent.jpg', '/montreSerpent.avif', '/leather-watch.png'],
     rating: 5,
     description:
       "Une montre chronographe sophistiquée alliant un design classique à une fonctionnalité moderne. Cette élégante montre combine une ingénierie de précision avec un style intemporel, en faisant l'accessoire parfait pour toute occasion.",

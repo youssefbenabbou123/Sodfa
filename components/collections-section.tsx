@@ -8,7 +8,7 @@ export default function CollectionsSection() {
       name: "Montres",
       description: "Garde-temps élégants pour la femme moderne",
       href: "/category/watches",
-      image: "/MontreSerpent.avif",
+      image: "/montreSerpent.avif",
     },
     {
       name: "Colliers",
