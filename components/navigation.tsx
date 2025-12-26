@@ -55,11 +55,11 @@ export default function Navigation({ cartCount, onCartClick }: NavigationProps) 
             : "bg-transparent py-4 top-8"
         }`}
       >
-      <div className="w-full px-4 sm:px-6 lg:px-8 relative z-50">
-        <div className="flex items-center justify-between h-20 relative z-50">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20 relative">
           {/* Mobile Menu Button - Left */}
           <button
-            className={`md:hidden p-2 hover:bg-primary/10 rounded-full transition-colors relative z-[60] pointer-events-auto ${
+            className={`md:hidden p-2 hover:bg-primary/10 rounded-full transition-colors z-10 ${
               shouldUseDarkIcons ? "text-foreground" : "text-white"
             }`}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -117,10 +117,10 @@ export default function Navigation({ cartCount, onCartClick }: NavigationProps) 
         </div>
 
           {/* Cart Icon - Far Right */}
-          <div className="ml-auto flex items-center gap-3 relative z-[60] pointer-events-auto">
+          <div className="ml-auto flex items-center gap-3 z-10">
           <button 
             onClick={onCartClick} 
-              className={`relative p-2 hover:bg-primary/10 rounded-full transition-colors pointer-events-auto ${
+              className={`relative p-2 hover:bg-primary/10 rounded-full transition-colors ${
                 shouldUseDarkIcons ? "text-foreground" : "text-white"
               }`}
             >

@@ -130,7 +130,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
       <Navigation cartCount={cartItems.length} onCartClick={() => setCartOpen(!cartOpen)} />
 
       {/* Back Button */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-36 relative z-[60]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-36 relative z-40">
         <button
           onClick={() => router.back()}
           className="inline-flex items-center gap-2 text-foreground hover:text-primary transition-colors cursor-pointer relative pointer-events-auto"
