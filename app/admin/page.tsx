@@ -15,25 +15,44 @@ export default function AdminDashboard() {
   })
 
   useEffect(() => {
-    // Load stats from localStorage
-    const products = JSON.parse(localStorage.getItem("products") || "[]")
-    const orders = JSON.parse(localStorage.getItem("orders") || "[]")
-    
-    // Only count orders with status "livré" in revenue
-    const totalRevenue = orders.reduce((sum: number, order: any) => {
-      if (order.status === "livré") {
-        return sum + (order.total || 0)
-      }
-      return sum
-    }, 0)
-    const pendingOrders = orders.filter((order: any) => order.status === "pending" || order.status === "En attente").length
+    async function loadStats() {
+      try {
+        // Fetch products and orders from MongoDB API
+        const [productsRes, ordersRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/orders'),
+        ])
 
-    setStats({
-      totalProducts: products.length || 8,
-      totalOrders: orders.length,
-      totalRevenue,
-      pendingOrders,
-    })
+        const productsData = await productsRes.json()
+        const ordersData = await ordersRes.json()
+
+        const products = productsData.success ? productsData.data : []
+        const orders = ordersData.success ? ordersData.data : []
+
+        // Only count orders with status "livré" in revenue
+        const totalRevenue = orders.reduce((sum: number, order: any) => {
+          if (order.status === "livré") {
+            return sum + (order.total || 0)
+          }
+          return sum
+        }, 0)
+        
+        const pendingOrders = orders.filter(
+          (order: any) => order.status === "pending" || order.status === "En attente"
+        ).length
+
+        setStats({
+          totalProducts: products.length,
+          totalOrders: orders.length,
+          totalRevenue,
+          pendingOrders,
+        })
+      } catch (error) {
+        console.error('Error loading stats:', error)
+      }
+    }
+
+    loadStats()
   }, [])
 
   const statCards = [

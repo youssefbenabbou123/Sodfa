@@ -32,42 +32,55 @@ export default function Cart({ items, onRemove, onUpdateQuantity, onClose, onCle
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
-  const handleCheckout = (e: React.FormEvent) => {
+  const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Save order to localStorage
-    const order = {
-      id: Date.now().toString(),
-      customerName: formData.fullName,
-      phone: formData.phone,
-      city: formData.city,
-      address: formData.address,
-      items: items,
-      total: total,
-      status: "pending",
-      date: new Date().toISOString(),
-    }
+    try {
+      // Save order to MongoDB
+      const order = {
+        customerName: formData.fullName,
+        phone: formData.phone,
+        city: formData.city,
+        address: formData.address,
+        items: items,
+        total: total,
+        status: "pending",
+      }
 
-    const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]")
-    existingOrders.push(order)
-    localStorage.setItem("orders", JSON.stringify(existingOrders))
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order),
+      })
 
-    // Show success toast
-    setShowToast(true)
-    setShowCheckout(false)
-    
-    // Clear cart and form
-    if (onClearCart) {
-      onClearCart()
-    } else {
-      items.forEach((item) => onRemove(item.id))
+      const data = await response.json()
+      console.log('Order creation response:', data)
+      if (data.success) {
+        console.log('✅ Order saved successfully to MongoDB')
+        // Show success toast
+        setShowToast(true)
+        setShowCheckout(false)
+        
+        // Clear cart and form
+        if (onClearCart) {
+          onClearCart()
+        } else {
+          items.forEach((item) => onRemove(item.id))
+        }
+        setFormData({ fullName: "", phone: "", city: "", address: "" })
+        
+        // Close cart after a delay
+        setTimeout(() => {
+          onClose()
+        }, 2000)
+      } else {
+        console.error('❌ Order creation failed:', data.error)
+        alert(`Erreur lors de la commande: ${data.error || 'Veuillez réessayer.'}`)
+      }
+    } catch (error) {
+      console.error('❌ Error creating order:', error)
+      alert("Erreur lors de la commande. Veuillez réessayer.")
     }
-    setFormData({ fullName: "", phone: "", city: "", address: "" })
-    
-    // Close cart after a delay
-    setTimeout(() => {
-      onClose()
-    }, 2000)
   }
 
   if (showCheckout) {

@@ -3,17 +3,30 @@
 import { useRef, useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import ProductCard from "./product-card"
-import { PRODUCTS } from "@/lib/products"
+import { getProducts, type Product } from "@/lib/products-api"
 
 interface RecommendedSectionProps {
   onAddToCart: (product: { id: string; name: string; price: number; image: string }) => void
 }
 
 export default function RecommendedSection({ onAddToCart }: RecommendedSectionProps) {
-  // Get top 3 products by rating (deterministic to avoid hydration mismatch)
-  const recommendedProducts = [...PRODUCTS]
-    .sort((a, b) => b.rating - a.rating)
-    .slice(0, 3)
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    async function loadRecommended() {
+      try {
+        const allProducts = await getProducts()
+        // Get top 3 products by rating
+        const recommended = [...allProducts]
+          .sort((a, b) => b.rating - a.rating)
+          .slice(0, 3)
+        setRecommendedProducts(recommended)
+      } catch (error) {
+        console.error('Error loading recommended products:', error)
+      }
+    }
+    loadRecommended()
+  }, [])
   
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentIndex, setCurrentIndex] = useState(0)

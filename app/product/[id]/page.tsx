@@ -2,16 +2,20 @@
 
 import Link from "next/link"
 import { ArrowLeft, ShoppingBag } from "lucide-react"
-import { useState, use } from "react"
+import { useState, use, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import Cart from "@/components/cart"
 import Toast from "@/components/toast"
-import { getProductById, PRODUCTS, type Product } from "@/lib/products"
+import { getProductById, getProducts, type Product } from "@/lib/products-api"
 
 export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const product = getProductById(id)
+  const router = useRouter()
+  const [product, setProduct] = useState<Product | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
@@ -19,6 +23,44 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
     Array<{ id: string; name: string; price: number; quantity: number; image: string }>
   >([])
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
+
+  useEffect(() => {
+    async function loadProduct() {
+      try {
+        setLoading(true)
+        const productData = await getProductById(id)
+        setProduct(productData)
+        
+        if (productData) {
+          // Load related products
+          const allProducts = await getProducts()
+          const related = allProducts
+            .filter((p) => p.id !== productData.id && p.category === productData.category)
+            .slice(0, 3)
+          setRelatedProducts(related)
+        }
+      } catch (error) {
+        console.error('Error loading product:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProduct()
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation cartCount={cartItems.length} onCartClick={() => setCartOpen(!cartOpen)} />
+        <div className="pt-32 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-xl text-muted-foreground">Chargement du produit...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
 
   if (!product) {
     return (
@@ -38,9 +80,6 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   }
 
   const images = product.images && product.images.length > 0 ? product.images : [product.image]
-  const relatedProducts = PRODUCTS.filter(
-    (p) => p.id !== product.id && p.category === product.category
-  ).slice(0, 3)
 
   const addToCart = () => {
     const existingItem = cartItems.find((item) => item.id === product.id)
@@ -91,14 +130,14 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
       <Navigation cartCount={cartItems.length} onCartClick={() => setCartOpen(!cartOpen)} />
 
       {/* Back Button */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-32">
-        <Link
-          href="/shop"
-          className="inline-flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-36 relative z-[60]">
+        <button
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-2 text-foreground hover:text-primary transition-colors cursor-pointer relative pointer-events-auto"
         >
           <ArrowLeft size={20} />
-          Back to shop
-        </Link>
+          Retour
+        </button>
       </div>
 
       {/* Product Section */}

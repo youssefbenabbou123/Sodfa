@@ -40,33 +40,62 @@ export default function AdminCommandes() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
   useEffect(() => {
-    const savedOrders = localStorage.getItem("orders")
-    if (savedOrders) {
-      setOrders(JSON.parse(savedOrders))
-    }
+    // Fetch orders from MongoDB API
+    console.log('🔄 Fetching orders from API...')
+    fetch('/api/orders')
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('📦 Orders API response:', data)
+        if (data.success) {
+          console.log(`✅ Loaded ${data.data.length} orders`)
+          setOrders(data.data)
+        } else {
+          console.error('❌ Failed to load orders:', data.error)
+        }
+      })
+      .catch((error) => {
+        console.error('❌ Error fetching orders:', error)
+      })
   }, [])
 
-  const updateOrderStatus = (orderId: string, status: Order["status"]) => {
-    const order = orders.find((o) => o.id === orderId)
-    const updated = orders.map((order) =>
-      order.id === orderId ? { ...order, status } : order
-    )
-    setOrders(updated)
-    localStorage.setItem("orders", JSON.stringify(updated))
-    setOpenStatusDropdown(null)
-    setDropdownPosition(null)
-    
-    // Show toast message
-    if (status === "livré") {
-      setToast({ 
-        message: `Commande marquée comme livrée. ${order?.total.toFixed(2)} MAD ajoutés aux revenus.`, 
-        type: "success" 
+  const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
+    try {
+      const order = orders.find((o) => o.id === orderId)
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
       })
-    } else {
-      setToast({ 
-        message: `Statut de la commande mis à jour: ${STATUS_CONFIG[status]?.label}`, 
-        type: "success" 
-      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Refresh orders list
+        const ordersRes = await fetch('/api/orders')
+        const ordersData = await ordersRes.json()
+        if (ordersData.success) {
+          setOrders(ordersData.data)
+        }
+        setOpenStatusDropdown(null)
+        setDropdownPosition(null)
+        
+        // Show toast message
+        if (status === "livré") {
+          setToast({ 
+            message: `Commande marquée comme livrée. ${order?.total.toFixed(2)} MAD ajoutés aux revenus.`, 
+            type: "success" 
+          })
+        } else {
+          setToast({ 
+            message: `Statut de la commande mis à jour: ${STATUS_CONFIG[status]?.label}`, 
+            type: "success" 
+          })
+        }
+      } else {
+        setToast({ message: "Erreur lors de la mise à jour", type: "error" })
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error)
+      setToast({ message: "Erreur lors de la mise à jour", type: "error" })
     }
   }
 

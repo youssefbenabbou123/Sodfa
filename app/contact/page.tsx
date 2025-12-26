@@ -4,11 +4,8 @@ import { useState } from "react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import Cart from "@/components/cart"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Mail, Phone, MapPin, Send, Sparkles } from "lucide-react"
+import { MessageCircle, Phone, Send, Sparkles } from "lucide-react"
+import Link from "next/link"
 
 export default function ContactPage() {
   const [cartOpen, setCartOpen] = useState(false)
@@ -18,54 +15,16 @@ export default function ContactPage() {
   
   const removeFromCart = () => {}
   const updateQuantity = () => {}
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setSubmitStatus("idle")
-
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false)
-      setSubmitStatus("success")
-      setFormData({ name: "", email: "", subject: "", message: "" })
-      setTimeout(() => setSubmitStatus("idle"), 5000)
-    }, 1000)
-  }
 
   const contactInfo = [
     {
-      icon: Mail,
-      title: "Email",
-      details: ["hello@sodfa.com", "support@sodfa.com"],
-      color: "text-blue-500"
-    },
-    {
-      icon: Phone,
-      title: "Téléphone",
-      details: ["+212 XXX XXX XXX", "Lun-Ven, 9h-18h"],
+      icon: MessageCircle,
+      title: "WhatsApp",
+      phone: "+212 629 651 392",
+      hours: "Lun-Ven, 9h-18h",
+      link: "https://wa.me/212629651392",
+      description: "Contactez-nous directement via WhatsApp pour une réponse rapide et personnalisée. Notre équipe est disponible du lundi au vendredi de 9h à 18h.",
       color: "text-green-500"
-    },
-    {
-      icon: MapPin,
-      title: "Adresse",
-      details: ["Maroc", "Livraison gratuite partout au Maroc"],
-      color: "text-purple-500"
     }
   ]
 
@@ -102,8 +61,8 @@ export default function ContactPage() {
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Contactez-nous</h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Vous avez une question ou besoin d'aide ? Nous sommes là pour vous aider. Contactez-nous via 
-                  l'un des canaux suivants.
+                  Vous avez une question sur nos produits ou besoin d'aide ? Contactez-nous directement via WhatsApp. 
+                  Notre équipe est prête à vous aider avec le sourire !
                 </p>
               </div>
 
@@ -111,124 +70,95 @@ export default function ContactPage() {
                 {contactInfo.map((info, index) => {
                   const Icon = info.icon
                   return (
-                    <div
+                    <Link
                       key={info.title}
-                      className="group relative p-6 rounded-xl border border-border bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
+                      href={info.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative block p-6 rounded-xl border border-border bg-card hover:border-green-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/10 hover:-translate-y-1"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <div className="flex items-start gap-4">
-                        <div className={`mt-1 p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors ${info.color}`}>
-                          <Icon className="w-6 h-6" />
+                        <div className={`mt-1 p-4 rounded-xl bg-green-500/10 group-hover:bg-green-500/20 transition-colors ${info.color}`}>
+                          <Icon className="w-7 h-7 text-green-500" />
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-foreground mb-2 text-lg">{info.title}</h3>
-                          {info.details.map((detail, i) => (
-                            <p key={i} className="text-muted-foreground text-sm leading-relaxed">
-                              {detail}
+                        <div className="flex-1">
+                          <h3 className="font-bold text-foreground mb-3 text-xl">{info.title}</h3>
+                          <div className="space-y-2 mb-3">
+                            <p className="text-foreground font-semibold text-lg">
+                              {info.phone}
                             </p>
-                          ))}
+                            <p className="text-muted-foreground text-sm">
+                              {info.hours}
+                            </p>
+                          </div>
+                          <p className="text-muted-foreground text-sm leading-relaxed">
+                            {info.description}
+                          </p>
+                          <div className="mt-4 inline-flex items-center gap-2 text-green-600 font-medium text-sm group-hover:gap-3 transition-all">
+                            <span>Envoyer un message</span>
+                            <Send className="w-4 h-4" />
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
+
+              <div className="p-6 rounded-xl bg-gradient-to-br from-green-500/5 to-green-600/5 border border-green-500/20">
+                <h3 className="font-semibold text-foreground mb-2">Pourquoi WhatsApp ?</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  WhatsApp nous permet de vous répondre rapidement et de manière personnalisée. Que ce soit pour 
+                  des questions sur nos produits, des demandes de personnalisation ou un suivi de commande, 
+                  nous sommes là pour vous accompagner !
+                </p>
+              </div>
             </div>
 
-            {/* Contact Form */}
+            {/* WhatsApp CTA Card */}
             <div className="animate-in fade-in slide-in-from-right-4 duration-700">
-              <div className="relative p-8 md:p-10 rounded-2xl border border-border bg-card shadow-lg">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-foreground font-medium">Nom</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Votre nom"
-                      className="h-12 border-border focus:border-primary transition-colors"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="votre.email@exemple.com"
-                      className="h-12 border-border focus:border-primary transition-colors"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="subject" className="text-foreground font-medium">Sujet</Label>
-                    <Input
-                      id="subject"
-                      name="subject"
-                      type="text"
-                      required
-                      value={formData.subject}
-                      onChange={handleChange}
-                      placeholder="Comment pouvons-nous vous aider ?"
-                      className="h-12 border-border focus:border-primary transition-colors"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="message" className="text-foreground font-medium">Message</Label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      required
-                      value={formData.message}
-                      onChange={handleChange}
-                      placeholder="Dites-nous en plus..."
-                      rows={6}
-                      className="border-border focus:border-primary transition-colors resize-none"
-                    />
-                  </div>
-
-                  {submitStatus === "success" && (
-                    <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg animate-in fade-in slide-in-from-bottom-2">
-                      <p className="text-green-800 dark:text-green-200 text-sm">
-                        Merci ! Votre message a été envoyé avec succès. Nous vous répondrons bientôt.
-                      </p>
+              <div className="relative p-8 md:p-10 rounded-2xl border border-border bg-gradient-to-br from-card to-green-500/5 shadow-lg overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-3 rounded-xl bg-green-500/10">
+                      <MessageCircle className="w-8 h-8 text-green-500" />
                     </div>
-                  )}
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                      Parlez-nous directement
+                    </h2>
+                  </div>
+                  
+                  <p className="text-muted-foreground mb-8 leading-relaxed">
+                    Cliquez sur le bouton ci-dessous pour nous contacter directement via WhatsApp. 
+                    Notre équipe vous répondra dans les plus brefs délais pendant nos heures d'ouverture.
+                  </p>
 
-                  {submitStatus === "error" && (
-                    <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg animate-in fade-in slide-in-from-bottom-2">
-                      <p className="text-red-800 dark:text-red-200 text-sm">
-                        Une erreur s'est produite. Veuillez réessayer.
-                      </p>
-                    </div>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting} 
-                    className="w-full h-12 text-base font-semibold"
+                  <Link
+                    href="https://wa.me/212629651392"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center w-full gap-3 h-14 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-green-500/30 hover:scale-[1.02] group"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <span className="animate-spin mr-2">⏳</span>
-                        Envoi en cours...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Envoyer le message
-                      </>
-                    )}
-                  </Button>
-                </form>
+                    <MessageCircle className="w-5 h-5" />
+                    <span>Ouvrir WhatsApp</span>
+                    <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+
+                  <div className="mt-6 pt-6 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm">
+                      <div>
+                        <p className="text-foreground font-medium">Téléphone</p>
+                        <p className="text-muted-foreground">+212 629 651 392</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-foreground font-medium">Horaires</p>
+                        <p className="text-muted-foreground">Lun-Ven, 9h-18h</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

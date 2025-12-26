@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import ProductCard from "./product-card"
-import { PRODUCTS, CATEGORIES } from "@/lib/products"
+import { getProducts, CATEGORIES, type Product } from "@/lib/products-api"
 
 interface ProductGridProps {
   onAddToCart: (product: { id: string; name: string; price: number; image: string }) => void
@@ -10,8 +11,21 @@ interface ProductGridProps {
 }
 
 export default function ProductGrid({ onAddToCart, featuredOnly = false }: ProductGridProps) {
-  // Show all products or just featured ones (first 8)
-  const displayProducts = featuredOnly ? PRODUCTS.slice(0, 8) : PRODUCTS
+  const [displayProducts, setDisplayProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const allProducts = await getProducts()
+        // Show all products or just featured ones (first 8)
+        const products = featuredOnly ? allProducts.slice(0, 8) : allProducts
+        setDisplayProducts(products)
+      } catch (error) {
+        console.error('Error loading products:', error)
+      }
+    }
+    loadProducts()
+  }, [featuredOnly])
 
   return (
     <section className="py-16 bg-background">
@@ -25,15 +39,27 @@ export default function ProductGrid({ onAddToCart, featuredOnly = false }: Produ
 
         {/* Category Navigation */}
         <div className="flex flex-wrap gap-2 justify-center mb-12">
-          {CATEGORIES.map((category) => (
-            <Link
-              key={category}
-              href={`/category/${category.toLowerCase()}`}
-              className="px-4 py-2 text-sm font-medium rounded-full transition bg-secondary text-foreground hover:bg-border"
-            >
-              {category}
-            </Link>
-          ))}
+          {CATEGORIES.map((category) => {
+            // Map French category to URL format
+            const categoryUrlMap: Record<string, string> = {
+              'Tout': 'all',
+              'Montres': 'watches',
+              'Colliers': 'necklaces',
+              'Bracelets': 'bracelets',
+              "Boucles d'oreilles": 'earrings',
+              'Bagues': 'rings',
+            }
+            const urlParam = categoryUrlMap[category] || category.toLowerCase()
+            return (
+              <Link
+                key={category}
+                href={`/category/${urlParam}`}
+                className="px-4 py-2 text-sm font-medium rounded-full transition bg-secondary text-foreground hover:bg-border"
+              >
+                {category}
+              </Link>
+            )
+          })}
         </div>
 
         {/* Product Grid */}

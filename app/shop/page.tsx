@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Navigation from "@/components/navigation"
 import ProductCard from "@/components/product-card"
 import Footer from "@/components/footer"
 import Cart from "@/components/cart"
 import Toast from "@/components/toast"
-import { PRODUCTS, CATEGORIES, getCategoryName } from "@/lib/products"
+import { getProducts, CATEGORIES, getCategoryName, type Product } from "@/lib/products-api"
 import Link from "next/link"
 import { Sparkles, Search, ChevronDown } from "lucide-react"
 
@@ -19,6 +19,8 @@ export default function ShopPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Tout")
   const [sortBy, setSortBy] = useState("pertinence")
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
   const addToCart = (product: { id: string; name: string; price: number; image: string }) => {
     setCartItems((prev) => {
@@ -47,9 +49,28 @@ export default function ShopPage() {
     setCartItems([])
   }
 
+  // Fetch products from MongoDB
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setLoading(true)
+        console.log('🔄 Loading products from API...')
+        const allProducts = await getProducts()
+        console.log('✅ Products loaded:', allProducts.length)
+        setProducts(allProducts)
+      } catch (error) {
+        console.error('❌ Error loading products:', error)
+        setToast({ message: "Erreur lors du chargement des produits", type: "error" })
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProducts()
+  }, [])
+
   // Filter and sort products
   const filteredProducts = useMemo(() => {
-    let filtered = PRODUCTS
+    let filtered = products
 
     // Filter by search term
     if (searchTerm) {
@@ -94,7 +115,7 @@ export default function ShopPage() {
     })
 
     return sorted
-  }, [searchTerm, selectedCategory, sortBy])
+  }, [products, searchTerm, selectedCategory, sortBy])
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,20 +141,33 @@ export default function ShopPage() {
 
           {/* Category Navigation */}
           <div className="flex flex-wrap gap-3 justify-center mb-4 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
-            {CATEGORIES.map((category, index) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`group relative px-6 py-3 text-sm font-medium rounded-full transition-all duration-300 ${
-                  selectedCategory === category
-                    ? "bg-[#d8bd78] text-white shadow-lg shadow-[#d8bd78]/20"
-                    : "bg-card border border-border hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5"
-                }`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <span className="relative z-10">{category}</span>
-              </button>
-            ))}
+            {CATEGORIES.map((category, index) => {
+              // Map French category names to URL slugs
+              const categoryMap: Record<string, string> = {
+                "Tout": "/collections",
+                "Montres": "/category/watches",
+                "Colliers": "/category/necklaces",
+                "Bracelets": "/category/bracelets",
+                "Boucles d'oreilles": "/category/earrings",
+                "Bagues": "/category/rings",
+              }
+              const href = categoryMap[category] || "/collections"
+              
+              return (
+                <Link
+                  key={category}
+                  href={href}
+                  className={`group relative px-6 py-3 text-sm font-medium rounded-full transition-all duration-300 ${
+                    selectedCategory === category
+                      ? "bg-[#d8bd78] text-white shadow-lg shadow-[#d8bd78]/20"
+                      : "bg-card border border-border hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5"
+                  }`}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <span className="relative z-10">{category}</span>
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -184,7 +218,11 @@ export default function ShopPage() {
       {/* Product Grid */}
       <section className="py-12 pb-24">
         <div className="max-w-7xl mx-auto px-4">
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-16">
+              <p className="text-xl text-muted-foreground mb-4">Chargement des produits...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-xl text-muted-foreground mb-4">Aucun produit trouvé</p>
               <button

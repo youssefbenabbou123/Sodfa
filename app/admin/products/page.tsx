@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { Plus, Package, Search, Edit, Trash2, Image as ImageIcon } from "lucide-react"
-import { PRODUCTS } from "@/lib/products"
 import type { Product } from "@/lib/products"
 import ImageUpload from "@/components/admin/ImageUpload"
 import Toast from "@/components/toast"
@@ -28,16 +27,21 @@ export default function AdminProducts() {
   const categories = ["Watches", "Necklaces", "Bracelets", "Earrings", "Rings"]
 
   useEffect(() => {
-    const savedProducts = localStorage.getItem("products")
-    if (savedProducts) {
-      setProducts(JSON.parse(savedProducts))
-    } else {
-      setProducts(PRODUCTS)
-      localStorage.setItem("products", JSON.stringify(PRODUCTS))
-    }
+    // Fetch products from MongoDB API
+    fetch('/api/products')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setProducts(data.data)
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching products:', error)
+        setToast({ message: "Erreur lors du chargement des produits", type: "error" })
+      })
   }, [])
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (productImages.length === 0) {
       setToast({ message: "Veuillez uploader au moins une image", type: "error" })
       return
@@ -50,42 +54,73 @@ export default function AdminProducts() {
 
     const mainImage = productImages[mainImageIndex]
 
-    if (editingProduct) {
-      const updated = products.map((p) =>
-        p.id === editingProduct.id
-          ? {
-              ...editingProduct,
-              ...formData,
-              price: Number(formData.price),
-              image: mainImage,
-              images: productImages,
-            }
-          : p
-      )
-      setProducts(updated)
-      localStorage.setItem("products", JSON.stringify(updated))
-      setToast({ message: "Produit modifié avec succès", type: "success" })
-    } else {
-      const newProduct: Product = {
-        id: Date.now().toString(),
-        name: formData.name,
-        category: formData.category,
-        price: Number(formData.price),
-        image: mainImage,
-        images: productImages,
-        rating: 5,
-        description: formData.description,
+    try {
+      if (editingProduct) {
+        // Update existing product
+        const response = await fetch(`/api/products/${editingProduct.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            category: formData.category,
+            price: Number(formData.price),
+            image: mainImage,
+            images: productImages,
+            rating: editingProduct.rating,
+            description: formData.description,
+          }),
+        })
+
+        const data = await response.json()
+        if (data.success) {
+          // Refresh products list
+          const productsRes = await fetch('/api/products')
+          const productsData = await productsRes.json()
+          if (productsData.success) {
+            setProducts(productsData.data)
+          }
+          setToast({ message: "Produit modifié avec succès", type: "success" })
+        } else {
+          setToast({ message: "Erreur lors de la modification", type: "error" })
+        }
+      } else {
+        // Create new product
+        const response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            category: formData.category,
+            price: Number(formData.price),
+            image: mainImage,
+            images: productImages,
+            rating: 5,
+            description: formData.description,
+          }),
+        })
+
+        const data = await response.json()
+        if (data.success) {
+          // Refresh products list
+          const productsRes = await fetch('/api/products')
+          const productsData = await productsRes.json()
+          if (productsData.success) {
+            setProducts(productsData.data)
+          }
+          setToast({ message: "Produit ajouté avec succès", type: "success" })
+        } else {
+          setToast({ message: "Erreur lors de l'ajout", type: "error" })
+        }
       }
-      const updated = [...products, newProduct]
-      setProducts(updated)
-      localStorage.setItem("products", JSON.stringify(updated))
-      setToast({ message: "Produit ajouté avec succès", type: "success" })
+      setShowForm(false)
+      setEditingProduct(null)
+      setFormData({ name: "", category: "", price: "", description: "" })
+      setProductImages([])
+      setMainImageIndex(-1)
+    } catch (error) {
+      console.error('Error saving product:', error)
+      setToast({ message: "Erreur lors de la sauvegarde", type: "error" })
     }
-    setShowForm(false)
-    setEditingProduct(null)
-    setFormData({ name: "", category: "", price: "", description: "" })
-    setProductImages([])
-    setMainImageIndex(-1)
   }
 
   const handleEdit = (product: Product) => {
@@ -114,13 +149,30 @@ export default function AdminProducts() {
     }, 100)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) {
-      const product = products.find((p) => p.id === id)
-      const updated = products.filter((p) => p.id !== id)
-      setProducts(updated)
-      localStorage.setItem("products", JSON.stringify(updated))
-      setToast({ message: `Produit "${product?.name}" supprimé avec succès`, type: "success" })
+      try {
+        const product = products.find((p) => p.id === id)
+        const response = await fetch(`/api/products/${id}`, {
+          method: 'DELETE',
+        })
+
+        const data = await response.json()
+        if (data.success) {
+          // Refresh products list
+          const productsRes = await fetch('/api/products')
+          const productsData = await productsRes.json()
+          if (productsData.success) {
+            setProducts(productsData.data)
+          }
+          setToast({ message: `Produit "${product?.name}" supprimé avec succès`, type: "success" })
+        } else {
+          setToast({ message: "Erreur lors de la suppression", type: "error" })
+        }
+      } catch (error) {
+        console.error('Error deleting product:', error)
+        setToast({ message: "Erreur lors de la suppression", type: "error" })
+      }
     }
   }
 
@@ -256,6 +308,7 @@ export default function AdminProducts() {
                 mainImageIndex={mainImageIndex}
                 onImagesChange={setProductImages}
                 onMainImageChange={setMainImageIndex}
+                onError={(message) => setToast({ message, type: "error" })}
               />
             </div>
           </div>
